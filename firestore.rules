@@ -1,0 +1,389 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId}
+    // Fields:
+    //   - email: string (required)
+    //   - name: string (required)
+    //   - role: string (required)
+    //   - tenantId: string (required)
+    //   - unauthorized: boolean (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants
+    // Document ID: {tenantId}
+    // Fields:
+    //   - name: string (required)
+    //   - plan: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: access_requests
+    // Document ID: {requestId}
+    // Fields:
+    //   - email: string (required)
+    //   - name: string (required)
+    //   - status: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: platform_leads
+    // Document ID: {leadId}
+    // Fields:
+    //   - name: string (required)
+    //   - email: string (optional)
+    //   - phone: string (optional)
+    //   - company: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: whatsapp_numbers
+    // Document ID: {numberId}
+    // Fields:
+    //   - tenantId: string (required)
+    //   - number: string (required)
+    //   - instanceId: string (required)
+    //   - token: string (required)
+    //   - clientToken: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: whatsapp_conversations
+    // Document ID: {convId}
+    // Fields:
+    //   - tenantId: string (required)
+    //   - whatsapp_number_id: string (required)
+    //   - customer_phone: string (required)
+    //   - bot_active: boolean (required)
+    //   - last_message_at: timestamp (required)
+    //
+    // Collection: whatsapp_conversations/{convId}/messages
+    // Document ID: {messageId}
+    // Fields:
+    //   - tenantId: string (required)
+    //   - wa_message_id: string (required)
+    //   - direction: string (required)
+    //   - type: string (required)
+    //   - content: string (required)
+    //   - mediaUrl: string (optional)
+    //   - fileName: string (optional)
+    //   - status: string (required)
+    //   - timestamp: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/customers
+    // Document ID: {customerId}
+    // Fields:
+    //   - name: string (required)
+    //   - phone: string (required)
+    //   - email: string (optional)
+    //   - document: string (optional)
+    //   - address: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/vehicles
+    // Document ID: {vehicleId}
+    // Fields:
+    //   - customerId: string (required)
+    //   - make: string (required)
+    //   - model: string (required)
+    //   - year: string (optional)
+    //   - plate: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/services
+    // Document ID: {serviceId}
+    // Fields:
+    //   - name: string (required)
+    //   - description: string (optional)
+    //   - price: number (required)
+    //   - estimatedTime: number (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/parts
+    // Document ID: {partId}
+    // Fields:
+    //   - name: string (required)
+    //   - description: string (optional)
+    //   - price: number (required)
+    //   - stock: number (required)
+    //   - minStock: number (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/workOrders
+    // Document ID: {workOrderId}
+    // Fields:
+    //   - customerId: string (required)
+    //   - vehicleId: string (required)
+    //   - status: string (required)
+    //   - services: list (optional)
+    //   - parts: list (optional)
+    //   - total: number (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/quotes
+    // Document ID: {quoteId}
+    // Fields:
+    //   - customerId: string (required)
+    //   - vehicleId: string (required)
+    //   - status: string (required)
+    //   - services: list (optional)
+    //   - parts: list (optional)
+    //   - total: number (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/pre_quotes
+    // Document ID: {preQuoteId}
+    // Fields:
+    //   - customerId: string (required)
+    //   - vehicleId: string (required)
+    //   - status: string (required)
+    //   - services: list (optional)
+    //   - parts: list (optional)
+    //   - total: number (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/quote_requests
+    // Document ID: {quoteRequestId}
+    // Fields:
+    //   - customerId: string (required)
+    //   - vehicleId: string (required)
+    //   - status: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/leads
+    // Document ID: {leadId}
+    // Fields:
+    //   - name: string (required)
+    //   - phone: string (required)
+    //   - status: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/leads/{leadId}/messages
+    // Document ID: {messageId}
+    // Fields:
+    //   - content: string (required)
+    //   - sender: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/recalls
+    // Document ID: {recallId}
+    // Fields:
+    //   - vehicleId: string (required)
+    //   - description: string (required)
+    //   - status: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: tenants/{tenantId}/audit_logs
+    // Document ID: {logId}
+    // Fields:
+    //   - action: string (required)
+    //   - userId: string (required)
+    //   - details: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isTenantMember(tenantId) {
+      return isAuthenticated() && getUserData().tenantId == tenantId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() &&
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'SuperAdmin' ||
+          (request.auth.token.email == "harddisk1911@gmail.com" && request.auth.token.email_verified == true) ||
+          (request.auth.token.email == "server@oficinapro.com"));
+    }
+    
+    function isTenantAdmin(tenantId) {
+      return isTenantMember(tenantId) && getUserData().role == 'Gestor';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidString(field, minLen, maxLen) {
+      return request.resource.data[field] is string &&
+        request.resource.data[field].size() >= minLen &&
+        request.resource.data[field].size() <= maxLen;
+    }
+
+    function isValidOptionalString(field, minLen, maxLen) {
+      return !('field' in request.resource.data) ||
+             (request.resource.data[field] is string &&
+              request.resource.data[field].size() >= minLen &&
+              request.resource.data[field].size() <= maxLen);
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['email', 'name', 'role', 'tenantId', 'createdAt']) &&
+             data.email is string && isValidEmail(data.email) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.role in ['SuperAdmin', 'Gestor', 'Mecanico', 'Atendimento'] &&
+             data.tenantId is string && data.tenantId.size() > 0 && data.tenantId.size() < 100 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidTenant(data) {
+      return hasRequiredFields(['name', 'plan', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.plan is string && data.plan.size() > 0 && data.plan.size() < 50 &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidAccessRequest(data) {
+      return hasRequiredFields(['email', 'name', 'status', 'createdAt']) &&
+             data.email is string && isValidEmail(data.email) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.status in ['pending', 'approved', 'rejected'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidPlatformLead(data) {
+      return hasRequiredFields(['name', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidOptionalString('email', 0, 100) &&
+             isValidOptionalString('phone', 0, 50) &&
+             isValidOptionalString('company', 0, 100) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidWhatsAppNumber(data) {
+      return hasRequiredFields(['tenantId', 'number', 'instanceId', 'token', 'createdAt']) &&
+             data.tenantId is string && data.tenantId.size() > 0 && data.tenantId.size() < 100 &&
+             data.number is string && data.number.size() > 0 && data.number.size() < 50 &&
+             data.instanceId is string && data.instanceId.size() > 0 && data.instanceId.size() < 100 &&
+             data.token is string && data.token.size() > 0 && data.token.size() < 200 &&
+             isValidOptionalString('clientToken', 0, 200) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidWhatsAppConversation(data) {
+      return hasRequiredFields(['tenantId', 'whatsapp_number_id', 'customer_phone', 'bot_active', 'last_message_at']) &&
+             data.tenantId is string && data.tenantId.size() > 0 && data.tenantId.size() < 100 &&
+             data.whatsapp_number_id is string && data.whatsapp_number_id.size() > 0 && data.whatsapp_number_id.size() < 100 &&
+             data.customer_phone is string && data.customer_phone.size() > 0 && data.customer_phone.size() < 50 &&
+             data.bot_active is bool &&
+             data.last_message_at is timestamp;
+    }
+
+    function isValidWhatsAppMessage(data) {
+      return hasRequiredFields(['tenantId', 'wa_message_id', 'direction', 'type', 'content', 'status', 'timestamp']) &&
+             data.tenantId is string && data.tenantId.size() > 0 && data.tenantId.size() < 100 &&
+             data.wa_message_id is string && data.wa_message_id.size() > 0 && data.wa_message_id.size() < 100 &&
+             data.direction in ['inbound', 'outbound'] &&
+             data.type is string && data.type.size() > 0 && data.type.size() < 50 &&
+             data.content is string && data.content.size() >= 0 && data.content.size() < 5000 &&
+             isValidOptionalString('mediaUrl', 0, 1000) &&
+             isValidOptionalString('fileName', 0, 200) &&
+             data.status is string && data.status.size() > 0 && data.status.size() < 50 &&
+             data.timestamp is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Server Secrets (for backend authentication)
+    match /server_secrets/{secretId} {
+      allow read, write: if isAdmin();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (
+        isOwner(userId) || 
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == resource.data.tenantId) ||
+        (resource.data.email == request.auth.token.email)
+      );
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Gestor' && request.resource.data.tenantId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId && request.resource.data.role in ['Mecanico', 'Atendimento']) ||
+        (isOwner(userId) && request.resource.data.email == request.auth.token.email)
+      );
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (
+        isAdmin() || 
+        (isOwner(userId) && request.resource.data.role == resource.data.role && request.resource.data.tenantId == resource.data.tenantId) || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == resource.data.tenantId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Gestor' && request.resource.data.tenantId == resource.data.tenantId && request.resource.data.role in ['Mecanico', 'Atendimento'])
+      );
+      allow delete: if isAuthenticated() && (
+        isAdmin() || 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tenantId == resource.data.tenantId && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Gestor' && resource.data.role in ['Mecanico', 'Atendimento']) ||
+        (resource.data.email == request.auth.token.email && userId.matches('^u-.*'))
+      );
+    }
+
+    // Tenants collection
+    match /tenants/{tenantId} {
+      allow read: if isTenantMember(tenantId) || isAdmin();
+      allow create: if isAuthenticated() && isValidTenant(request.resource.data);
+      allow update: if (isAdmin() || isTenantAdmin(tenantId)) && isValidTenant(request.resource.data);
+      allow delete: if isAdmin();
+      
+      // Subcollections within a tenant
+      match /{document=**} {
+        allow read: if isTenantMember(tenantId) || isAdmin();
+        allow write: if isTenantMember(tenantId) || isAdmin();
+      }
+    }
+
+    // Root collections for WhatsApp that need tenant isolation
+    match /whatsapp_numbers/{numberId} {
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.tenantId == getUserData().tenantId);
+      allow create: if isAuthenticated() && isValidWhatsAppNumber(request.resource.data) && (isAdmin() || request.resource.data.tenantId == getUserData().tenantId);
+      allow update: if isAuthenticated() && isValidWhatsAppNumber(request.resource.data) && (isAdmin() || (resource.data.tenantId == getUserData().tenantId && request.resource.data.tenantId == getUserData().tenantId));
+      allow delete: if isAuthenticated() && (isAdmin() || resource.data.tenantId == getUserData().tenantId);
+    }
+
+    match /whatsapp_conversations/{convId} {
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.tenantId == getUserData().tenantId);
+      allow create: if isAuthenticated() && isValidWhatsAppConversation(request.resource.data) && (isAdmin() || request.resource.data.tenantId == getUserData().tenantId);
+      allow update: if isAuthenticated() && isValidWhatsAppConversation(request.resource.data) && (isAdmin() || (resource.data.tenantId == getUserData().tenantId && request.resource.data.tenantId == getUserData().tenantId));
+      allow delete: if isAuthenticated() && (isAdmin() || resource.data.tenantId == getUserData().tenantId);
+      
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && (isAdmin() || resource.data.tenantId == getUserData().tenantId);
+        allow create: if isAuthenticated() && isValidWhatsAppMessage(request.resource.data) && (isAdmin() || request.resource.data.tenantId == getUserData().tenantId);
+        allow update: if isAuthenticated() && isValidWhatsAppMessage(request.resource.data) && (isAdmin() || (resource.data.tenantId == getUserData().tenantId && request.resource.data.tenantId == getUserData().tenantId));
+        allow delete: if isAuthenticated() && (isAdmin() || resource.data.tenantId == getUserData().tenantId);
+      }
+    }
+    
+    // Platform Leads
+    match /platform_leads/{leadId} {
+      allow create: if isValidPlatformLead(request.resource.data); // Anyone can submit a lead
+      allow read, update, delete: if isAdmin(); // Only SuperAdmins can manage leads
+    }
+
+    // Access Requests
+    match /access_requests/{requestId} {
+      allow create: if isAuthenticated() && isValidAccessRequest(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}
